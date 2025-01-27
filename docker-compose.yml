@@ -13,5 +13,5 @@ services:
       - LAMBDA_EXECUTOR=docker # ensures Lambda functions are executed in Docker containers.
       - DOCKER_HOST=unix:///var/run/docker.sock # points LocalStack to the Docker socket on the host machine for interacting with Docker.
     volumes:
-      - "./localstack:/var/lib/localstack" # mounts a directory for persisting LocalStack's state across container restarts.
+      # - "./localstack:/var/lib/localstack" # mounts a directory for persisting LocalStack's state across container restarts.
       - "/var/run/docker.sock:/var/run/docker.sock" # mounts the Docker socket to allow LocalStack to use Docker on the host.

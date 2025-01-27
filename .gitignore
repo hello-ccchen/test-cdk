@@ -1,5 +1,6 @@
 *.js
 !jest.config.js
+!esbuild.config.js
 *.d.ts
 node_modules
 localstack
@@ -7,3 +8,5 @@ localstack
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+
+dist
