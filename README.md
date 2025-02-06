@@ -7,11 +7,21 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 ## Useful commands
 
 - `npm run build` compile typescript to js
-- `npm run watch` watch for changes and compile
-- `npm run test` perform the jest unit tests
-- `npx cdk deploy` deploy this stack to your default AWS account/region
-- `npx cdk diff` compare deployed stack with current state
-- `npx cdk synth` emits the synthesized CloudFormation template
+- `cdk synth` emits the synthesized CloudFormation template
+- `cdk deploy` deploy this stack to your default AWS account/region
+- `cdk destroy` to tear down deployed infrastructure.
+- `cdk diff` compare deployed stack with current state
+
+### AWS CLI
+
+- delete dynamo table
+  ```
+  aws --endpoint-url=http://localhost:4566 dynamodb delete-table --table-name YourTableName
+  ```
+- list dynamo table
+  ```
+  aws --endpoint-url=http://localhost:4566 dynamodb list-tables
+  ```
 
 ## Project Structure and Execution Guide
 
@@ -157,8 +167,133 @@ This file manages dependencies for your CDK project and specifies scripts to bui
 | `lib\<app-name>-stack.ts` | Contains resource definitions for a specific stack.                          |
 | `package.json`            | Manages dependencies and defines helpful scripts for building and deploying. |
 
-### Notes
+## Testing Locally with SAM
 
-- Use `cdk synth` to generate the CloudFormation templates locally.
-- Use `cdk deploy` to deploy the infrastructure to AWS.
-- Use `cdk destroy` to tear down deployed infrastructure.
+### Official Document:
+
+https://docs.aws.amazon.com/cdk/v2/guide/testing-locally-getting-started.html
+
+### Prepare the Environment
+
+#### 1. Ensure esbuild.config.js is Setup
+
+If your project uses esbuild for bundling, make sure your esbuild.config.js file is properly configured to bundle your Lambda functions. This config is essential for building the Lambda functions correctly before deploying or testing locally.
+
+For example, your esbuild.config.js might look like this:
+
+```js
+module.exports = {
+  entryPoints: ["./src/index.ts"],
+  bundle: true,
+  platform: "node",
+  target: "node14",
+  outdir: "./dist",
+};
+```
+
+Ensure that the output directory (./dist) contains the bundled Lambda functions required by your application.
+
+#### 2. Run cdk synth
+
+Before testing your Lambda locally with SAM, you need to synthesize the CDK stack to generate the CloudFormation template. This ensures that your Lambda functions and infrastructure are correctly defined.
+
+Run the following command to generate the template:
+
+```bash
+cdk synth
+```
+
+#### 3. Setup DynamoDB Locally (if using)
+
+To test DynamoDB locally when using AWS SAM (Serverless Application Model), you can use **DynamoDB Local**. DynamoDB Local is a small, client-side version of DynamoDB that you can run on your local machine. Here's how you can set it up for local testing with SAM.
+
+##### 1. Start DynamoDB Local
+
+You can easily run DynamoDB Local using **Docker**. To start DynamoDB Local, run the following command:
+
+```bash
+docker run -d -p 8000:8000 amazon/dynamodb-local
+```
+
+This will run DynamoDB Local on `http://localhost:8000`.
+
+##### 2. Set Environment Variables
+
+Next, you need to configure your local environment to point to DynamoDB Local instead of the actual DynamoDB service in AWS. Set the following environment variables:
+
+```bash
+export AWS_ACCESS_KEY_ID=test
+export AWS_SECRET_ACCESS_KEY=test
+export AWS_DEFAULT_REGION=us-east-1
+export AWS_ENDPOINT_URL=http://localhost:8000
+```
+
+- `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` are set to arbitrary values (`test` in this case), as DynamoDB Local doesn't require real AWS credentials.
+- `AWS_ENDPOINT_URL` is the key setting here, which points to DynamoDB Local running on `localhost:8000`.
+
+##### 3. Configure SAM to Use DynamoDB Local
+
+When you run **SAM** locally, it will now use DynamoDB Local instead of the AWS cloud DynamoDB. You can test your Lambda functions locally by setting the correct endpoint.
+
+- Ensure the `AWS_ENDPOINT_URL` is pointing to DynamoDB Local (as shown above).
+- When your Lambda function accesses DynamoDB, it will use DynamoDB Local instead of AWS cloud DynamoDB.
+
+##### 4. Example DynamoDB Table Local Setup
+
+You can use the AWS CLI or AWS SDK to create tables in DynamoDB Local. Here's an example of creating a simple table:
+
+```bash
+aws --endpoint-url=http://localhost:8000 dynamodb create-table \
+    --table-name TodoTable \
+    --attribute-definitions \
+        AttributeName=Id,AttributeType=S \
+    --key-schema \
+        AttributeName=Id,KeyType=HASH \
+    --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
+```
+
+This command creates a table named `MyTable` in DynamoDB Local with a simple `Id` key.
+
+Verify if the table created
+
+```bash
+aws --endpoint-url=http://localhost:8000 dynamodb list-tables
+```
+
+##### 5. Stop DynamoDB Local
+
+When you're done with testing, you can stop DynamoDB Local by stopping the Docker container:
+
+```bash
+docker stop $(docker ps -q --filter "ancestor=amazon/dynamodb-local")
+```
+
+This will stop the DynamoDB Local container.
+
+##### 6. Cleanup Environment Variables
+
+After you're done testing with DynamoDB Local, you can **unset** the environment variables to avoid any issues with future AWS CLI or SAM usage:
+
+```bash
+unset AWS_ACCESS_KEY_ID
+unset AWS_SECRET_ACCESS_KEY
+unset AWS_DEFAULT_REGION
+unset AWS_ENDPOINT_URL
+```
+
+Unsetting these variables ensures that any future AWS CLI or SDK calls will use your default AWS credentials instead of pointing to the local DynamoDB instance.
+
+### Invoke Locally
+
+Now you can invoke your Lambda API locally using SAM CLI and specify a custom CloudFormation template generated by CDK. This is useful when you want to test the infrastructure setup defined in your CDK stack.
+
+To run the Lambda API locally using your CDK generated template, use the following command:
+
+```bash
+sam local start-api -t ./cdk.out/TestCdkStack.template.json
+```
+
+This command will:
+
+Use the generated CloudFormation template (TestCdkStack.template.json) located in the ./cdk.out directory.
+Start the local API gateway and Lambda functions defined in your template.
