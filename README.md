@@ -1,17 +1,16 @@
 # AWS CDK TypeScript project
 
-This is a blank project for CDK development with TypeScript.
+This is a sample project for CDK development with TypeScript.
 
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
 ## Useful commands
 
-- `npm run build` compile typescript to js
-- `npm run watch` watch for changes and compile
-- `npm run test` perform the jest unit tests
 - `npx cdk deploy` deploy this stack to your default AWS account/region
 - `npx cdk diff` compare deployed stack with current state
 - `npx cdk synth` emits the synthesized CloudFormation template
+- `npx cdk deploy` to deploy the infrastructure to AWS.
+- `npx cdk destroy` to tear down deployed infrastructure.
 
 ## Project Structure and Execution Guide
 
@@ -157,8 +156,87 @@ This file manages dependencies for your CDK project and specifies scripts to bui
 | `lib\<app-name>-stack.ts` | Contains resource definitions for a specific stack.                          |
 | `package.json`            | Manages dependencies and defines helpful scripts for building and deploying. |
 
-### Notes
+## Local Development/Testing Setup
 
-- Use `cdk synth` to generate the CloudFormation templates locally.
-- Use `cdk deploy` to deploy the infrastructure to AWS.
-- Use `cdk destroy` to tear down deployed infrastructure.
+### What is LocalStack?
+
+[LocalStack](https://localstack.cloud/) is a fully functional local AWS cloud stack that emulates a variety of AWS services (e.g., S3, Lambda, DynamoDB) for local development and testing. It allows you to run and test your AWS-related code locally, saving time and reducing costs compared to using AWS services directly. LocalStack provides a local testing environment that closely mimics the behavior of AWS, helping you build and test cloud applications without needing an active AWS account or spending on cloud resources.
+
+For more details, visit the official LocalStack documentation:  
+[LocalStack Docs](https://docs.localstack.cloud/)
+
+### 1. Set Up AWS Local Profile
+
+Before running any commands, make sure to set up your AWS profile for LocalStack. Run the following command:
+
+```bash
+source ./setup-aws-local-profile.sh
+```
+
+This will configure your local AWS profile to work with LocalStack, ensuring that all AWS SDKs and the AWS CLI point to your local environment, using the `localstack` profile instead of your default AWS profile.
+
+### 2. Start LocalStack
+
+To start LocalStack, which emulates AWS services locally using Docker, run:
+
+```bash
+npm run init:localstack
+```
+
+This command starts all the necessary LocalStack services in the background using [Docker Compose](./docker-compose.yml). LocalStack will be accessible at `http://localhost:4566`, where all AWS service requests will be redirected to the local emulation instead of actual AWS.
+
+> **Note on LocalStack URL**:  
+> LocalStack runs on `http://localhost:4566` by default. Any AWS SDK or AWS CLI calls you make will be sent to this URL unless otherwise configured. For example, if you use the AWS CLI with the `--endpoint-url` flag, you would point it to `http://localhost:4566` to interact with your local AWS services.
+
+#### Check LocalStack Health
+
+To verify if LocalStack has initialized successfully, you can check its health status by running the following command:
+
+```bash
+curl http://localhost:4566/_localstack/health
+```
+
+If everything is set up correctly, this will return a JSON response indicating that all services are up and running.
+
+### 3. Start the Application
+
+Once LocalStack is running, you can start your application and deploy resources to the local environment by running:
+
+```bash
+npm run start
+```
+
+This command does the following:
+
+- **Builds** the application using `npm run build`.
+- **Bootstraps** the local AWS environment (`npm run local:bootstrap`), which prepares the environment for deployment.
+- **Synthesizes** the CloudFormation template (`npm run local:synth`), converting your CDK stack into a CloudFormation template.
+- **Deploys** the stack to LocalStack (`npm run local:deploy`), making your resources available in the local AWS environment.
+
+> **Note:** If any changes are made to the Lambda handlers or other application code, you'll need to rebuild and redeploy the application by running `npm run build` and `npm run local:deploy` again to reflect the changes.
+
+### 4. Destroy LocalStack
+
+Once you're done with your local development, you can stop and clean up the LocalStack services by running:
+
+```bash
+npm run destroy:localstack
+```
+
+This command stops all containers and removes any volumes and orphaned containers that were created by Docker Compose during LocalStack's startup.
+
+---
+
+### Explanation of Commands in `package.json`
+
+- **`npm run init:localstack`**: Starts LocalStack in detached mode using Docker Compose.
+- **`npm run start`**: Builds, bootstraps, synthesizes, and deploys the application to LocalStack.
+- **`npm run destroy:localstack`**: Stops LocalStack and removes all related volumes and orphaned containers.
+
+---
+
+### Additional Notes:
+
+- **Lambda Code Changes**: Whenever you modify Lambda handler code or other application logic, remember to run `npm run build` to rebuild the project and `npm run local:deploy` to deploy the updated code to LocalStack.
+
+- **Clean Up**: If you want to clean up the build artifacts and CloudFormation outputs, run `npm run clean`.
