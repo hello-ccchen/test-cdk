@@ -223,7 +223,7 @@ Once you're done with your local development, you can stop and clean up the Loca
 npm run destroy:localstack
 ```
 
-This command stops all containers and removes any volumes and orphaned containers that were created by Docker Compose during LocalStack's startup.
+This command stops all containers that were created by Docker Compose during LocalStack's startup.
 
 ---
 
@@ -231,7 +231,7 @@ This command stops all containers and removes any volumes and orphaned container
 
 - **`npm run init:localstack`**: Starts LocalStack in detached mode using Docker Compose.
 - **`npm run start`**: Builds, bootstraps, synthesizes, and deploys the application to LocalStack.
-- **`npm run destroy:localstack`**: Stops LocalStack and removes all related volumes and orphaned containers.
+- **`npm run destroy:localstack`**: Stops LocalStack.
 
 ---
 
@@ -240,3 +240,8 @@ This command stops all containers and removes any volumes and orphaned container
 - **Lambda Code Changes**: Whenever you modify Lambda handler code or other application logic, remember to run `npm run build` to rebuild the project and `npm run local:deploy` to deploy the updated code to LocalStack.
 
 - **Clean Up**: If you want to clean up the build artifacts and CloudFormation outputs, run `npm run clean`.
+
+- **Verify aws services is running from localstack**: example: list tables from dynamodb
+  ```
+  aws dynamodb list-tables --profile localstack --endpoint-url=http://localhost:4566
+  ```

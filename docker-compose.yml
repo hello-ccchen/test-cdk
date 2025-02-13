@@ -11,7 +11,7 @@ services:
       # - SERVICES=lambda,apigateway,s3 # specifies which AWS services are simulated by LocalStack
       - DEBUG=1 # enables detailed logs for troubleshooting.
       - LAMBDA_EXECUTOR=docker # ensures Lambda functions are executed in Docker containers.
-      - LAMBDA_NETWORK=bridge
+      - LAMBDA_NETWORK=bridge # Sets the Docker network mode for Lambda functions, allowing them to interact with other services on the same network.
       - DOCKER_HOST=unix:///var/run/docker.sock # points LocalStack to the Docker socket on the host machine for interacting with Docker.
     volumes:
       # - "./localstack:/var/lib/localstack" # mounts a directory for persisting LocalStack's state across container restarts.
