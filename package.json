@@ -11,7 +11,7 @@
     "clean": "rm -rf ./dist && rm -rf ./cdk.out",
     "build": "node esbuild.config.js",
     "local": "cdklocal",
-    "local:bootstrap": "npm run local bootstrap aws://000000000000/us-east-1",
+    "local:bootstrap": "npm run local bootstrap",
     "local:synth": "npm run local synth",
     "local:deploy": "npm run local deploy -- --require-approval never ",
     "local:undeploy": "npm run local destroy",
